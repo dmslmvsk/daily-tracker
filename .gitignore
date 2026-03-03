@@ -1,0 +1,7 @@
+# .gitignore
+backend/bin/
+backend/.env
+frontend/node_modules/
+frontend/dist/
+.ds_store
+.env

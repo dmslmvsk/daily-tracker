@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+    db:
+        image: postgres:18-alpine
+        container_name: daily_tracker_db
+        restart: always
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        ports:
+            - "${DB_PORT}:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        container_name: daily_tracker_api
+        ports:
+            - "8080:8080"
+        environment:
+            DB_SOURCE: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable
+            JWT_SECRET: ${JWT_SECRET}
+        depends_on:
+            db:
+                condition: service_healthy
+        volumes:
+            - ./backend:/app
+
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: daily_tracker_ui
+        ports:
+            - "5173:5173"
+        environment:
+            - VITE_API_URL=http://localhost:8080
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        stdin_open: true
+        tty: true
+
+volumes:
+    postgres_data:
