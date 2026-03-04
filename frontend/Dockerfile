@@ -2,8 +2,6 @@
 FROM node:24-alpine
 
 
-RUN apk update && apk upgrade
-
 WORKDIR /app
 
 COPY package*.json ./
