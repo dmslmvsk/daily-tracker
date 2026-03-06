@@ -38,9 +38,10 @@ func main() {
 
     store := repository.New(db)
     router := api.NewRouter(store)
+    loggedRouter:= api.Logging(router)
     log.Println("Server is starting on port 8080...")
 
-    err = http.ListenAndServe(":8080",router)
+    err = http.ListenAndServe(":8080",loggedRouter)
     if err != nil {
         log.Fatal("Server failed to start: ",err)
     }

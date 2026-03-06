@@ -1,8 +1,10 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/dmslmvsk/daily-tracker/backend/internal/repository"
@@ -13,11 +15,12 @@ type CreateUserRequest struct {
 	Password string `json:"password"`
 }
 
-type CreateUserResponse struct {
+type UserResponse struct {
 	ID int32 `json:"id"`
 	Email string `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
 
 type UserHandler struct {
 	store *repository.Queries
@@ -25,6 +28,38 @@ type UserHandler struct {
 
 func NewUserHandler(store *repository.Queries) *UserHandler{
 	return &UserHandler{store:store}
+}
+
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request){
+	id, err := strconv.Atoi(r.PathValue(("id")))
+
+	if err != nil {
+		http.Error(w,err.Error(),http.StatusBadRequest)
+		return
+	}
+
+	user,err := h.store.GetUserById(r.Context(),int32(id))
+
+	if err!= nil {
+
+		if err == sql.ErrNoRows{
+			http.Error(w,"User not found",http.StatusNotFound)
+			return
+		}
+
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+
+	resp := UserResponse{
+		ID: user.ID,
+		Email: user.Email,
+		CreatedAt: user.CreatedAt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)	
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request){
@@ -49,7 +84,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request){
 		http.Error(w,err.Error(),http.StatusInternalServerError)
 		return
 	}
-	resp:=CreateUserResponse{
+	resp:= UserResponse{
 		ID: user.ID,
 		Email: user.Email,
 		CreatedAt: user.CreatedAt,
