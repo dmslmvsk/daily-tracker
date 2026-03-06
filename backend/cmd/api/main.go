@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"log"
+	"net/http"
 	"os"
 
+	"github.com/dmslmvsk/daily-tracker/backend/internal/api"
 	"github.com/dmslmvsk/daily-tracker/backend/internal/repository"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -31,12 +33,17 @@ func main() {
     runDBMigration("file://migrations", dbURL)
 
 
-    store := repository.New(db)
-    _ = store
 
     log.Println("Database connection, Ping and Migrations — Success!")
 
-    select {}
+    store := repository.New(db)
+    router := api.NewRouter(store)
+    log.Println("Server is starting on port 8080...")
+
+    err = http.ListenAndServe(":8080",router)
+    if err != nil {
+        log.Fatal("Server failed to start: ",err)
+    }
 }
 
 func runDBMigration(migrationURL string, dbURL string) {

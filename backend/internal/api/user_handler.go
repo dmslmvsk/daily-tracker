@@ -27,7 +27,7 @@ func NewUserHandler(store *repository.Queries) *UserHandler{
 	return &UserHandler{store:store}
 }
 
-func (h* UserHandler) CreateUser(w http.ResponseWriter, r *http.Request){
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request){
 	var req CreateUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil{
